@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Fairfax Example</title>
+	<meta charset="utf-8" />
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<script src="js/bootstrap.min.js"></script>
+
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+<link rel="stylesheet" href="css/slider.css" />
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/data.js"></script>
+
+<link rel="stylesheet" href="css/leaflet-overview.css" />
+<script src="js/leaflet-overview.js"></script>
+
+
+<script src="js/leaflet.ajax.min.js"></script>
+
+</head>
+<body>
+
+	<div id="map" style="margin-left:5px;float:left;height:500px;width:100%"></div>
+	<div id="sidebar" style="padding:10px;margin-top: -30px;"><h3 id="title"></h3><h5 id="subtitle">test</h5>
+	<div>
+		
+	<span id='buttonContainer'>
+
+	</span>
+
+
+	</div>
+		<div id="container" style="top-padding:10px;min-width: 310px;  height: 450px; margin: 0 auto;"></div>
+	</div>
+
+<script>
+var fairfax = {}
+
+var seriesOptions = [],
+	seriesCounter = 0,
+	pageCount = 0,
+	theData =[],
+	areaData =[],
+	indexData =[],
+	seriesData=[]
+
+var dataCount = -1
+var mapIndexData =[]
+var mapIndex
+var sep = ','
+
+var mapIndexParam
+var mapIndex
+
+var title = "Jewish Comparison in LA"
+var historicalURL = ''
+var ChartTitle = 'Jewish Residents as % of Total Population'
+var ChartSeries = 'Jewish Residents as % of Total Population'
+var xAxisTitle = 'Area'
+
+var index = "02"
+var DataX = "val.properties.time"
+var DataY = "val.properties.population"
+
+var fullHistoricalLayer = historicalURL + "/{z}/{x}/{y}.png"
+
+var colorArray = ['#058DC7', '#50B432', '#ED561B', 'purple', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
+
+
+var dataLayer=L.geoJson();
+var count = 0
+
+var themap = L.map('map').setView([34.075981185564046, -118.35837364196776], 14);
+
+var pageOptions = {
+	chartTitle: '',
+	yAxisTitle: '',
+	title: '',
+	rowColumnFlag: true,
+	dataField:'',
+	format:'',
+	basemap:'',
+	basemapurl:'',
+	subTitle:''
+}
+
+
+
+
+function CSV(array) {
+    // Use first element to choose the keys and the order
+    var keys = Object.keys(array[0]);
+
+    // Build header
+    var result = keys.join("\t") + "\n";
+
+    // Add the rows
+    array.forEach(function(obj){
+        keys.forEach(function(j, ix){
+            if (ix) result += "\t";
+            result += obj[j];
+        });
+        result += "\n";
+    });
+    console.log(result)
+    return result;
+}
+
+function findEntry(fruit) { 
+    return entryFeed === mapID;
+}
+
+function GetURLParameter(sParam)
+	{
+	    var sPageURL = window.location.search.substring(1);
+	    var sURLVariables = sPageURL.split('&');
+	    for (var i = 0; i < sURLVariables.length; i++)
+	    {
+	        var sParameterName = sURLVariables[i].split('=');
+	        if (sParameterName[0] == sParam)
+	        {
+	            return sParameterName[1];
+	        }
+	        else{
+	        	return "1"
+	        }
+	    }
+	}
+
+fairfax.loadMapID = function(index){
+	var spreadsheetID = '1P2njK-JDwRxp36dne20tkJa26axRPXMmf18JGbAivn0';
+	var worksheetID = 'od6';
+	var url = 'https://spreadsheets.google.com/feeds/list/1-YZ5S5N1gmg5OCU_itaEuGV_GPuNAJJKMdHvlJl1-fE/od6/public/values?alt=json';
+	console.log(url);	
+	$.getJSON(url,function(data){
+		console.log(data)
+		var entryFeed = data.feed.entry
+		$.each(entryFeed, function(i,val){
+			// console.log(val)
+			var checkID = val.gsx$mapnum.$t
+			// console.log(mapIndex)
+
+			if (checkID === mapIndex){
+				var theMapid = val.gsx$mapnum.$t
+				// var theMaps = val.gsx$mapsused.$t
+				var theTitle = val.gsx$title.$t		
+				pageOptions.chartTitle = theTitle;
+				pageOptions.basemap = val.gsx$basemap.$t;
+				pageOptions.basemapurl = val.gsx$basemapurl.$t + "/{z}/{x}/{y}.png";
+
+				var mapTitle = val.gsx$maptitle.$t
+				pageOptions.title = mapTitle
+
+				console.log(pageOptions.basemapurl)
+			}
+		});
+		console.log(mapIndexData)
+	})
+	fairfax.loadData();
+}
+
+fairfax.loadData = function(){
+	// bring in the spreadsheet
+
+		console.log(pageOptions.title)
+		console.log(pageOptions.subTitle)
+		$('#title').text(pageOptions.title);
+		$('#subtitle').text(pageOptions.subTitle);
+		console.log(theData)
+		console.log(dataCount)
+
+		// fairfax.loadChart();
+		fairfax.loadviewer("fairfax_jewish")
+}
+
+
+
+function createButtons()
+{
+	MapData.$buttons.split(",")
+	$.each(ButtonArray,function(i,val){
+		$('#buttoncontainerid').append(val)
+	})
+
+}
+
+
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+	maxZoom: 18,
+}).addTo(themap);
+
+
+L.Map.include({
+  'clearLayers': function () {
+    this.eachLayer(function (layer) {
+      this.removeLayer(layer);
+    }, this);
+  }
+});
+
+fairfax.changeMap = function(area){
+	var areaGeojson = area+".geojson"
+	console.log(areaGeojson)
+}
+
+function clear_polyline() {
+  map.removeLayer( linesFeatureLayer );
+}
+
+function addDataToMap(data, target) {
+
+}
+
+$(document).ready(function() {
+	mapIndexParam = GetURLParameter('map');
+	mapIndex = mapIndexParam
+	console.log(mapIndex);
+	if (mapIndex == 1){
+		mapIndex
+	} 
+	fairfax.loadMapID(mapIndex)
+});
+
+fairfax.loadviewer = function(area,target){
+	var areaGeojson = "geojson/boyleheights.geojson"
+	$.getJSON(areaGeojson, function(data) {
+		datagroup = [];
+
+		datagroup.push(data)
+		group = new L.layerGroup(datagroup);
+		addDataToMap(data,target);
+	});
+	var fullHistoricalLayer
+	L.tileLayer(pageOptions.basemapurl, {
+		attribution: pageOptions.basemap
+		}).addTo(themap);
+				
+}
+
+
+fairfax.loadChart = function(){
+	console.log(theData)
+	fairfax.loadviewer("fairfax_jewish")
+}
+
+var old1 = new L.TileLayer(fullHistoricalLayer,{attribution: pageOptions.basemap});
+var old2 = new L.TileLayer('http://tiles.ats.ucla.edu/tiles/Los_Angeles_1986/{z}/{x}/{y}.png');
+
+
+            var osm2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+              name: 'osm',
+              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            });
+            
+            var mqo2 = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
+              name: 'mapquest',
+              attribution: 'Tiles courtesy of <a href="http://www.mapquest.com/">MapQuest</a>',
+              subdomains: '1234'
+            });
+
+var mqo3 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+  name: 'osm',
+  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+});
+
+var osm3 = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
+  name: 'mapquest',
+  attribution: 'Tiles courtesy of <a href="http://www.mapquest.com/">MapQuest</a>',
+  subdomains: '1234'
+});
+
+
+L.control.overview([mqo2,osm2]).addTo(themap);
+</script>
+</body>
+</html>
+
