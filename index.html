@@ -1,80 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Fairfax Example</title>
-	<meta charset="utf-8" />
-
+<!-- jquery  -->
 <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-<link href="css/bootstrap.min.css" rel="stylesheet">
-<script src="js/bootstrap.min.js"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 
-<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<!-- leaflet -->
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-<link rel="stylesheet" href="css/slider.css" />
-<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/data.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 
-<link rel="stylesheet" href="css/leaflet-overview.css" />
-<script src="js/leaflet-overview.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/slate/bootstrap.min.css"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.6/slate/bootstrap.css" />
 
+<!-- styling -->
+<style type="text/css">
+	#map { height: 550px;}
+	#title {height: 10px}
+	div#content {display: block;}
 
-<script src="js/leaflet.ajax.min.js"></script>
+	.arrow-right{
+	  width: 0; 
+	  height: 0; 
+	  border-top: 60px solid transparent;
+	  border-bottom: 60px solid transparent;
+	  
+	  border-left: 60px solid green;
+	}
 
-</head>
-<body>
+	.arrow-left{
+	  width: 0; 
+	  height: 0; 
+	  border-top: 60px solid transparent;
+	  border-bottom: 60px solid transparent; 
+	  
+	  border-right:60px solid green; 
+	}	
+</style>
 
-	<div id="map" style="margin-left:5px;float:left;height:500px;width:100%"></div>
-	<div id="sidebar" style="padding:10px;margin-top: -30px;"><h3 id="title"></h3><h5 id="subtitle">test</h5>
-	<div>
-		
-	<span id='buttonContainer'>
+<!-- javascript -->
+<script type="text/javascript">
 
-	</span>
-
-
-	</div>
-		<div id="container" style="top-padding:10px;min-width: 310px;  height: 450px; margin: 0 auto;"></div>
-	</div>
-
-<script>
-var fairfax = {}
-
-var seriesOptions = [],
-	seriesCounter = 0,
-	pageCount = 0,
-	theData =[],
-	areaData =[],
-	indexData =[],
-	seriesData=[]
-
-var dataCount = -1
-var mapIndexData =[]
-var mapIndex
-var sep = ','
-
-var mapIndexParam
-var mapIndex
-
-var title = "Jewish Comparison in LA"
-var historicalURL = ''
-var ChartTitle = 'Jewish Residents as % of Total Population'
-var ChartSeries = 'Jewish Residents as % of Total Population'
-var xAxisTitle = 'Area'
-
-var index = "02"
-var DataX = "val.properties.time"
-var DataY = "val.properties.population"
-
-var fullHistoricalLayer = historicalURL + "/{z}/{x}/{y}.png"
-
-var colorArray = ['#058DC7', '#50B432', '#ED561B', 'purple', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
-
-
-var dataLayer=L.geoJson();
-var count = 0
-
-var themap = L.map('map').setView([34.075981185564046, -118.35837364196776], 14);
+var map;
+var boyleheights = {}
+var markerArray = [];
 
 var pageOptions = {
 	chartTitle: '',
@@ -89,30 +54,52 @@ var pageOptions = {
 }
 
 
+function addDataToMap(data){
+	var thestyle = {
+	    "color": "red",
+	    "weight": 3,
+	    "opacity": 1,
+	    "fillColor": "None"
 
+	};
 
-function CSV(array) {
-    // Use first element to choose the keys and the order
-    var keys = Object.keys(array[0]);
-
-    // Build header
-    var result = keys.join("\t") + "\n";
-
-    // Add the rows
-    array.forEach(function(obj){
-        keys.forEach(function(j, ix){
-            if (ix) result += "\t";
-            result += obj[j];
-        });
-        result += "\n";
-    });
-    console.log(result)
-    return result;
+    L.geoJson(data, {
+    	style: thestyle,
+        onEachFeature: function(feature, layer) {
+            var popupText = "<h3>Population in " + feature.properties.time +":</h3>"
+                + "<h3>" + feature.properties.population+"</h3>"
+            layer.bindPopup(popupText); }
+        }).addTo(map);
 }
 
-function findEntry(fruit) { 
-    return entryFeed === mapID;
+boyleheights.hoverOnMap = function(){
+	$('#map').hover(console.log('hello'),console.log('byby')) 
 }
+
+
+$(function() {
+	// create a map in the "map" div, set the view to a given place and zoom
+	map = L.map('map').setView([34.0464, -118.2115], 13);
+
+	// add an OpenStreetMap tile layer
+	L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}.{ext}', {
+	    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+	    ext: 'png'
+	}).addTo(map);
+
+
+	var areaGeojson = "geojson/boyleheights.geojson"
+	console.log(areaGeojson)
+
+	$.getJSON(areaGeojson, function(data) {
+		datagroup = [];
+
+		datagroup.push(data)
+		group = new L.layerGroup(datagroup);
+		addDataToMap(data);
+	});
+
+});
 
 function GetURLParameter(sParam)
 	{
@@ -131,9 +118,25 @@ function GetURLParameter(sParam)
 	    }
 	}
 
-fairfax.loadMapID = function(index){
-	var spreadsheetID = '1P2njK-JDwRxp36dne20tkJa26axRPXMmf18JGbAivn0';
-	var worksheetID = 'od6';
+
+
+$(document).ready(function() {
+	mapIndexParam = GetURLParameter('map');
+	mapIndex = mapIndexParam
+	console.log('the mapindex is '+mapIndex);
+	if (mapIndex == 1){
+		mapIndex
+	} 
+	console.log(mapIndex)
+	boyleheights.loadMap(mapIndex)
+	boyleheights.hoverOnMap();
+});	
+
+
+
+
+
+boyleheights.loadMap = function(index){
 	var url = 'https://spreadsheets.google.com/feeds/list/1-YZ5S5N1gmg5OCU_itaEuGV_GPuNAJJKMdHvlJl1-fE/od6/public/values?alt=json';
 	console.log(url);	
 	$.getJSON(url,function(data){
@@ -142,7 +145,7 @@ fairfax.loadMapID = function(index){
 		$.each(entryFeed, function(i,val){
 			// console.log(val)
 			var checkID = val.gsx$mapnum.$t
-			// console.log(mapIndex)
+			// console.log("check id is "+checkID)
 
 			if (checkID === mapIndex){
 				var theMapid = val.gsx$mapnum.$t
@@ -154,128 +157,23 @@ fairfax.loadMapID = function(index){
 
 				var mapTitle = val.gsx$maptitle.$t
 				pageOptions.title = mapTitle
-
 				console.log(pageOptions.basemapurl)
+				$('#title').text(pageOptions.title);
+				console.log(pageOptions.title)
 			}
+
+
 		});
-		console.log(mapIndexData)
+		// console.log(mapIndexData)
+		L.tileLayer(pageOptions.basemapurl, {
+			    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(map);		
 	})
-	fairfax.loadData();
 }
-
-fairfax.loadData = function(){
-	// bring in the spreadsheet
-
-		console.log(pageOptions.title)
-		console.log(pageOptions.subTitle)
-		$('#title').text(pageOptions.title);
-		$('#subtitle').text(pageOptions.subTitle);
-		console.log(theData)
-		console.log(dataCount)
-
-		// fairfax.loadChart();
-		fairfax.loadviewer("fairfax_jewish")
-}
-
-
-
-function createButtons()
-{
-	MapData.$buttons.split(",")
-	$.each(ButtonArray,function(i,val){
-		$('#buttoncontainerid').append(val)
-	})
-
-}
-
-
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-	maxZoom: 18,
-}).addTo(themap);
-
-
-L.Map.include({
-  'clearLayers': function () {
-    this.eachLayer(function (layer) {
-      this.removeLayer(layer);
-    }, this);
-  }
-});
-
-fairfax.changeMap = function(area){
-	var areaGeojson = area+".geojson"
-	console.log(areaGeojson)
-}
-
-function clear_polyline() {
-  map.removeLayer( linesFeatureLayer );
-}
-
-function addDataToMap(data, target) {
-
-}
-
-$(document).ready(function() {
-	mapIndexParam = GetURLParameter('map');
-	mapIndex = mapIndexParam
-	console.log(mapIndex);
-	if (mapIndex == 1){
-		mapIndex
-	} 
-	fairfax.loadMapID(mapIndex)
-});
-
-fairfax.loadviewer = function(area,target){
-	var areaGeojson = "geojson/boyleheights.geojson"
-	$.getJSON(areaGeojson, function(data) {
-		datagroup = [];
-
-		datagroup.push(data)
-		group = new L.layerGroup(datagroup);
-		addDataToMap(data,target);
-	});
-	var fullHistoricalLayer
-	L.tileLayer(pageOptions.basemapurl, {
-		attribution: pageOptions.basemap
-		}).addTo(themap);
-				
-}
-
-
-fairfax.loadChart = function(){
-	console.log(theData)
-	fairfax.loadviewer("fairfax_jewish")
-}
-
-var old1 = new L.TileLayer(fullHistoricalLayer,{attribution: pageOptions.basemap});
-var old2 = new L.TileLayer('http://tiles.ats.ucla.edu/tiles/Los_Angeles_1986/{z}/{x}/{y}.png');
-
-
-            var osm2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-              name: 'osm',
-              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            });
-            
-            var mqo2 = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-              name: 'mapquest',
-              attribution: 'Tiles courtesy of <a href="http://www.mapquest.com/">MapQuest</a>',
-              subdomains: '1234'
-            });
-
-var mqo3 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-  name: 'osm',
-  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-});
-
-var osm3 = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-  name: 'mapquest',
-  attribution: 'Tiles courtesy of <a href="http://www.mapquest.com/">MapQuest</a>',
-  subdomains: '1234'
-});
-
-
-L.control.overview([mqo2,osm2]).addTo(themap);
 </script>
-</body>
+<html>
+<div id="map"></div>
+<div class='arrow-left'></div>
+<div class='arrow-right'></div>
+<h3><div style="text-align:center" id="title">Hello</h3>
 </html>
-
